@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>식물 감정 애니메이션 테스트</title>
+<style>
+    body { 
+        display: flex; 
+        gap: 80px; 
+        justify-content: center; 
+        padding-top: 100px; 
+        font-family: sans-serif;
+        text-align: center;
+        background-color: #f8f9fa;
+    }
+    
+    /* 캐릭터를 담을 틀 (크기 지정) */
+    .plant-box { 
+        width: 150px; 
+        height: 150px; 
+        font-size: 100px; 
+        line-height: 150px; 
+    }
+
+    /* 1. 쾌적/휴식 상태: 부드럽게 위아래로 둥둥 떠다니는 효과 */
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+        100% { transform: translateY(0px); }
+    }
+    .anim-float { 
+        animation: float 3s ease-in-out infinite; 
+    }
+
+    /* 2. 추움/병듬 상태: 좌우로 짧고 빠르게 덜덜 떠는 효과 */
+    @keyframes shake {
+        0% { transform: translateX(0) rotate(0deg); }
+        25% { transform: translateX(-5px) rotate(-5deg); }
+        50% { transform: translateX(5px) rotate(5deg); }
+        75% { transform: translateX(-5px) rotate(-5deg); }
+        100% { transform: translateX(0) rotate(0deg); }
+    }
+    .anim-shake { 
+        animation: shake 0.4s ease-in-out infinite; 
+    }
+</style>
+</head>
+<body>
+
+    <div>
+        <h3>쾌적함 (Float)</h3>
+        <div class="plant-box anim-float">🪴</div> 
+    </div>
+
+    <div>
+        <h3>추움/아픔 (Shake)</h3>
+        <div class="plant-box anim-shake">🪴</div>
+    </div>
+
+</body>
+</html>

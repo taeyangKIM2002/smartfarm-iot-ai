@@ -1,0 +1,29 @@
+{
+    "model": "gemini-3-flash",
+    "temperature": 0.1,
+    "max-tokens": 4096,
+    "include-directories": [
+      "src",
+      "public"
+    ],
+    "exclude-files": [
+      "node_modules/**",
+      "dist/**",
+      ".git/**",
+      "package-lock.json",
+      "yarn.lock",
+      "*.log",
+      "src/assets/**"
+    ],
+    "context-files": [
+      "GEMINI.md",
+      "package.json",
+      "vite.config.ts"
+    ],
+    "coding-preferences": {
+      "language": "typescript",
+      "framework": "react",
+      "style-engine": "tailwind-css-v4",
+      "ui-library": ["radix-ui", "mui-v7"]
+    }
+  }

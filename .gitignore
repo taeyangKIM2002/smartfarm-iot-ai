@@ -1,0 +1,57 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.vscode-server/
+
+# Secrets and local env
+.env
+.env.*
+!.env.example
+*.key
+ssh-key-*
+id_rsa*
+id_ed25519*
+known_hosts
+
+# Logs and runtime output
+*.log
+*.err.log
+*.tmp
+*.pid
+
+# Frontend
+FrontEnd/node_modules/
+FrontEnd/dist/
+FrontEnd/.vite/
+
+# Backend / Gradle
+BackEnd/build/
+BackEnd/.gradle/
+BackEnd/out/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+
+# Local databases and stream fragments
+*.sqlite
+*.sqlite3
+*.db
+*.m3u8
+stream*.ts
+hls/*.ts
+
+# Model training runtime logs
+Model-Training/data/log/
+Model-Training/**/events.out.tfevents*
+
+# Test/runtime scratch
+test/*.log
+test/*.ts
+test/*.tmp

@@ -1,0 +1,4 @@
+jwt:
+  secret: ${JWT_SECRET:c21hcnRmYXJtLWxvY2FsLWRldi1zZWNyZXQtY2hhbmdlLW1lLTEyMzQ1Ng==}
+  access-token-validity-in-milliseconds: 3600000
+  refresh-token-validity-in-milliseconds: 1209600000

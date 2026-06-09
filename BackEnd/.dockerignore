@@ -1,0 +1,21 @@
+# Git 기록은 필요 없네
+.git
+.gitignore
+
+# 빌드 결과물 (도커 안에서 새로 빌드할 거니까!)
+build/
+target/
+out/
+
+# 로컬 환경 설정 (비밀번호 포함될 수 있음)
+.env
+*.log
+
+# IDE 설정 파일
+.idea/
+.vscode/
+*.iml
+
+# 도커 관련 파일 (이미지 안에 들어갈 필요 없음)
+Dockerfile
+docker-compose.yml

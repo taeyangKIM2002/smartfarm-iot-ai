@@ -1,0 +1,12 @@
+#용량이 큰 가중치, 모델, 이미지 파일
+checkpoints/
+data/dataset/
+*.weights
+*.tflite
+!android/app/src/main/assets/yolov4-416-fp32.tflite
+result.png
+*.jpg
+*.png
+
+#PR 파일
+*[Dd]escription*.md

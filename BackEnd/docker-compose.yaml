@@ -1,0 +1,62 @@
+services:
+  # 1. 스마트팜 사령탑 (Spring Boot API)
+  smart-farm-api:
+    build: .
+    container_name: smart-farm-api
+    restart: always
+    ports:
+      - "${SERVER_PORT}:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/${DB_NAME}?serverTimezone=Asia/Seoul
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - MQTT_BROKER_URL=${MQTT_URL}
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - mysql-db
+      - mosquitto
+
+  # 2. MySQL
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: always
+    ports:
+      - "${DB_PORT}:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  # 3. 데이터 우체국 (MQTT Mosquitto)
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto
+    restart: always
+    ports:
+      - "1883:1883"
+    volumes:
+      # 에러 방지를 위해 '폴더' 단위로 연결하는 게 정석일세!
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+
+  # 4. 영상 방송국 (MediaMTX)
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: mediamtx
+    restart: always
+    ports:
+      - "1935:1935" # RTMP (OBS나 일반 송출용)
+      - "8554:8554" # RTSP (라즈베리파이 rpicam-vid 송출용 - 필수!)
+      - "8888:8888" # HLS (리액트 웹 출력용)
+      - "8889:8889" # WebRTC (초저지연 출력용 - 옵션)
+    volumes:
+      # 설정 파일을 외부로 빼서 우리가 직접 튜닝할 수 있게 합니다.
+      - ./mediamtx.yml:/mediamtx.yml
+    environment:
+      # 환경 변수로도 설정 가능하지만, 파일 매핑이 더 관리하기 편합니다.
+      - MTX_PROTOCOLS=tcp
+volumes:
+  mysql_data:

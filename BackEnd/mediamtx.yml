@@ -1,0 +1,21 @@
+# MediaMTX 최적화 설정
+paths:
+  all:
+    # 어떤 입력이든 들어오면 자동으로 받아줌
+    source: publisher
+
+# HLS (리액트용) 설정
+hls:
+  enabled: yes
+  hlsAddress: :8888
+  hlsAlwaysRemux: yes           # 입력 즉시 변환 시작
+  hlsVariant: lowLatency        # 지연 시간 단축 모드
+  hlsSegmentCount: 3            # 보관할 조각 개수 (디스크 낭비 방지)
+  hlsSegmentDuration: 1s        # 각 조각의 길이 (짧을수록 실시간에 가까워짐)
+  hlsPartDuration: 200ms        # Low-Latency HLS용 세부 조각
+
+# WebRTC 설정 (나중에 지연 시간 줄이고 싶을 때 사용)
+webrtc:
+  enabled: yes
+  webrtcAddress: :8889
+  webrtcICEUDP: yes
