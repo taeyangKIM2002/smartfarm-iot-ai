@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Camera, Info, ScanSearch, ShieldAlert, ShieldCheck, VideoOff, Wifi, WifiOff } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Activity, Camera, Info, ShieldAlert, ShieldCheck, VideoOff, Wifi, WifiOff } from 'lucide-react';
 import Hls from 'hls.js';
 import { diseaseService, DiseaseAnalysis, DiseaseStats } from '../../service/diseaseService';
 
@@ -9,11 +9,13 @@ interface HardwareCameraProps {
 
 export function HardwareCamera({ streamUrl }: HardwareCameraProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const analyzingRef = useRef(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isStreaming, setIsStreaming] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<DiseaseAnalysis | null>(null);
+  const [lastAnalyzedAt, setLastAnalyzedAt] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -35,6 +37,9 @@ export function HardwareCamera({ streamUrl }: HardwareCameraProps) {
     let hls: Hls | undefined;
     const video = videoRef.current;
     if (!video) return;
+
+    setIsStreaming(false);
+    setError('');
 
     if (Hls.isSupported()) {
       hls = new Hls({
@@ -159,31 +164,56 @@ export function HardwareCamera({ streamUrl }: HardwareCameraProps) {
     };
   };
 
-  const analyzeCurrentFrame = async () => {
+  const analyzeCurrentFrame = useCallback(async () => {
+    if (analyzingRef.current) return;
+
     const frame = captureFrame();
     if (!frame) {
-      setError('라즈베리파이 카메라 프레임을 읽을 수 없습니다. 스트림 연결 상태를 확인해주세요.');
+      setError('라즈베리파이 카메라 프레임을 아직 읽을 수 없습니다. 스트림 연결 상태를 확인하세요.');
       return;
     }
 
+    analyzingRef.current = true;
     setIsAnalyzing(true);
     setError('');
+
     try {
       const result = await diseaseService.analyze(frame.stats, frame.image);
       setAnalysis(result);
-      localStorage.setItem('lastDiseaseAnalysis', JSON.stringify({
-        label: result.label,
-        status: result.status,
-        confidence: result.confidence,
-        analyzedAt: result.analyzedAt,
-      }));
+      setLastAnalyzedAt(result.analyzedAt);
+      localStorage.setItem(
+        'lastDiseaseAnalysis',
+        JSON.stringify({
+          label: result.label,
+          status: result.status,
+          confidence: result.confidence,
+          analyzedAt: result.analyzedAt,
+        }),
+      );
       window.dispatchEvent(new Event('lastDiseaseAnalysisUpdated'));
     } catch {
       setError('AI 상태 확인 API에 연결할 수 없습니다. Raspberry_Pi/api_server.py 실행 상태를 확인해주세요.');
     } finally {
+      analyzingRef.current = false;
       setIsAnalyzing(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!isStreaming || !isOnline) return;
+
+    const initialTimer = window.setTimeout(() => {
+      void analyzeCurrentFrame();
+    }, 1500);
+    const interval = window.setInterval(() => {
+      void analyzeCurrentFrame();
+    }, 10000);
+
+    return () => {
+      window.clearTimeout(initialTimer);
+      window.clearInterval(interval);
+    };
+  }, [analyzeCurrentFrame, isOnline, isStreaming]);
 
   const resultTone = analysis?.status === 'suspected'
     ? 'border-red-200 bg-red-50 text-red-700'
@@ -192,7 +222,7 @@ export function HardwareCamera({ streamUrl }: HardwareCameraProps) {
       : 'border-green-200 bg-green-50 text-green-700';
 
   const resultBadge = analysis?.status === 'watch'
-    ? '추가 확인 권장'
+    ? '관찰 권장'
     : `신뢰도 ${Math.round((analysis?.confidence ?? 0) * 100)}%`;
 
   return (
@@ -247,27 +277,27 @@ export function HardwareCamera({ streamUrl }: HardwareCameraProps) {
           </div>
         </div>
 
+        <div className="absolute right-5 top-5">
+          <div className="flex items-center gap-2 rounded-full border border-emerald-300/40 bg-emerald-950/70 px-3 py-1.5 text-[11px] font-bold text-emerald-100 backdrop-blur-md">
+            <Activity size={14} className={isAnalyzing ? 'animate-pulse' : ''} />
+            {isAnalyzing ? 'AI 분석 중' : '10초 주기 자동 분석'}
+          </div>
+        </div>
+
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent p-6">
           <div className="space-y-1">
             <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isStreaming ? 'text-green-400' : 'text-red-400'}`}>
               {isStreaming ? 'Cam / Connected' : 'Cam / Signal Lost'}
             </span>
             <p className="font-mono text-xl tabular-nums text-white/90">{formatTime(currentTime)}</p>
+            {lastAnalyzedAt && (
+              <p className="text-xs text-white/70">마지막 AI 분석: {formatTime(new Date(lastAnalyzedAt))}</p>
+            )}
           </div>
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={analyzeCurrentFrame}
-        disabled={!isStreaming || isAnalyzing}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
-      >
-        <ScanSearch size={16} />
-        {isAnalyzing ? '확인 중...' : '상태 확인'}
-      </button>
-
-      {analysis && (
+      {analysis ? (
         <div className={`mt-4 rounded-lg border p-4 ${resultTone}`}>
           <div className="flex items-center justify-between gap-3">
             <p className="text-lg font-bold">{analysis.label}</p>
@@ -280,6 +310,10 @@ export function HardwareCamera({ streamUrl }: HardwareCameraProps) {
               <span>{analysis.action}</span>
             </div>
           )}
+        </div>
+      ) : (
+        <div className="mt-4 rounded-lg border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-800">
+          카메라 스트림 연결 후 10초마다 자동으로 생육 상태를 분석합니다.
         </div>
       )}
 
