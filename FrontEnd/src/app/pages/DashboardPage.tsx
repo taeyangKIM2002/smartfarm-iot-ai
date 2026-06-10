@@ -67,6 +67,58 @@ const emotionLabel: Record<string, string> = {
   sick: '병듦',
 };
 
+type ChartPoint = {
+  id: number;
+  time: string;
+  temperature: number | null;
+  humidity: number | null;
+};
+
+const createEmptyDailyChartData = (): ChartPoint[] =>
+  Array.from({ length: 24 }, (_, hour) => ({
+    id: hour,
+    time: `${String(hour).padStart(2, '0')}:00`,
+    temperature: null,
+    humidity: null,
+  }));
+
+const getLocalDateKey = (date: Date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const buildDailyChartData = (logs: SensorData[]): ChartPoint[] => {
+  const buckets = Array.from({ length: 24 }, () => ({
+    temperature: 0,
+    humidity: 0,
+    count: 0,
+  }));
+
+  logs.forEach((log) => {
+    const createdAt = new Date(log.createdAt);
+    const hour = createdAt.getHours();
+    const temperature = Number(log.temperature);
+    const humidity = Number(log.humidity);
+
+    if (!Number.isFinite(temperature) || !Number.isFinite(humidity) || hour < 0 || hour > 23) {
+      return;
+    }
+
+    buckets[hour].temperature += temperature;
+    buckets[hour].humidity += humidity;
+    buckets[hour].count += 1;
+  });
+
+  return buckets.map((bucket, hour) => ({
+    id: hour,
+    time: `${String(hour).padStart(2, '0')}:00`,
+    temperature: bucket.count ? Number((bucket.temperature / bucket.count).toFixed(1)) : null,
+    humidity: bucket.count ? Number((bucket.humidity / bucket.count).toFixed(1)) : null,
+  }));
+};
+
 export default function DashboardPage() {
   const navigate = useNavigate();
   const currentUser = authService.getCurrentUser();
@@ -128,18 +180,7 @@ export default function DashboardPage() {
     };
   }, []);
 
-  const [chartData] = useState(() => {
-    const data = [];
-    for (let i = 0; i < 24; i += 1) {
-      data.push({
-        id: i,
-        time: `${String(i).padStart(2, '0')}:00`,
-        temperature: +(22 + Math.random() * 4).toFixed(1),
-        humidity: +(60 + Math.random() * 15).toFixed(1),
-      });
-    }
-    return data;
-  });
+  const [chartData, setChartData] = useState<ChartPoint[]>(createEmptyDailyChartData);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -175,6 +216,23 @@ export default function DashboardPage() {
     if (authService.isLoggedIn()) {
       fetchData();
       const interval = setInterval(fetchData, 5000);
+      return () => clearInterval(interval);
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchDailyChartData = async () => {
+      try {
+        const logs = await sensorService.getSensorHistoryByDate(SENSOR_DEVICE_ID, getLocalDateKey());
+        setChartData(buildDailyChartData(logs));
+      } catch (error) {
+        console.error('Failed to fetch daily chart data:', error);
+      }
+    };
+
+    if (authService.isLoggedIn()) {
+      fetchDailyChartData();
+      const interval = setInterval(fetchDailyChartData, 60000);
       return () => clearInterval(interval);
     }
   }, []);

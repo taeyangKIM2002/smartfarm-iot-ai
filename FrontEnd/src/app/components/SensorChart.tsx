@@ -4,15 +4,15 @@ interface SensorChartProps {
   data: Array<{
     id: number;
     time: string;
-    temperature: number;
-    humidity: number;
+    temperature: number | null;
+    humidity: number | null;
   }>;
 }
 
 export function SensorChart({ data }: SensorChartProps) {
   return (
     <div className="bg-white rounded-xl border-2 border-gray-200 p-6 shadow-lg">
-      <h3 className="text-lg font-semibold mb-4 text-gray-800">24시간 온·습도 추이</h3>
+      <h3 className="mb-4 text-lg font-semibold text-gray-800">오늘 24시간 온·습도 추이</h3>
       <ResponsiveContainer width="100%" height={250}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
@@ -27,8 +27,8 @@ export function SensorChart({ data }: SensorChartProps) {
             }}
           />
           <Legend wrapperStyle={{ fontSize: '14px' }} />
-          <Line type="monotone" dataKey="temperature" stroke="#ef4444" strokeWidth={2} name="온도 (°C)" dot={false} />
-          <Line type="monotone" dataKey="humidity" stroke="#3b82f6" strokeWidth={2} name="습도 (%)" dot={false} />
+          <Line type="monotone" dataKey="temperature" stroke="#ef4444" strokeWidth={2} name="온도 (°C)" dot={false} connectNulls />
+          <Line type="monotone" dataKey="humidity" stroke="#3b82f6" strokeWidth={2} name="습도 (%)" dot={false} connectNulls />
         </LineChart>
       </ResponsiveContainer>
     </div>
