@@ -18,6 +18,8 @@ public interface SensorLogRepository extends JpaRepository<SensorLog, Long> {
     //Device 객체로 최근 로그 탐색
     Optional<SensorLog> findTopByDeviceOrderByCreatedAtDesc(Device device);
 
+    boolean existsByDeviceIdAndCreatedAt(String deviceId, LocalDateTime createdAt);
+
     List<SensorLog> findByDeviceIdOrderByCreatedAtDesc(String deviceId, Pageable pageable);
 
     /**

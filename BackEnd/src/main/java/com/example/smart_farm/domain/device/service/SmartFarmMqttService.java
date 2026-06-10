@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -48,7 +49,17 @@ public class SmartFarmMqttService {
 
     private void processSensorData(String payload) throws JsonProcessingException {
         SensorLogDataDto dto = objectMapper.readValue(payload, SensorLogDataDto.class);
+        saveSensorData(dto);
+    }
+
+    public boolean saveSensorData(SensorLogDataDto dto) {
         validateSensorData(dto);
+        LocalDateTime measuredAt = dto.getMeasuredAt() != null ? dto.getMeasuredAt() : LocalDateTime.now();
+
+        if (sensorLogRepository.existsByDeviceIdAndCreatedAt(dto.getDeviceId(), measuredAt)) {
+            log.info("Duplicated sensor data skipped. deviceId={}, measuredAt={}", dto.getDeviceId(), measuredAt);
+            return false;
+        }
 
         Device device = deviceRepository.findById(dto.getDeviceId())
                 .orElseGet(() -> deviceRepository.save(Device.builder()
@@ -72,7 +83,7 @@ public class SmartFarmMqttService {
                 .emotionMessage(dto.getEmotionMessage())
                 .gifName(dto.getGifName())
                 .isAbnormal(isAbnormal)
-                .createdAt(dto.getMeasuredAt())
+                .createdAt(measuredAt)
                 .build();
 
         sensorLogRepository.save(logEntity);
@@ -82,6 +93,7 @@ public class SmartFarmMqttService {
         if (dto.getSoilMoisture().compareTo(new BigDecimal("30.0")) < 0) {
             triggerActuator(dto.getDeviceId(), "WATER", "AUTO");
         }
+        return true;
     }
 
     private void validateSensorData(SensorLogDataDto dto) {

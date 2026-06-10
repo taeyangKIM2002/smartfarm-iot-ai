@@ -2,10 +2,12 @@ package com.example.smart_farm.domain.device.controller;
 
 import com.example.smart_farm.domain.device.dto.SensorAvgResponse;
 import com.example.smart_farm.domain.device.dto.SensorDataResponseDto;
+import com.example.smart_farm.domain.device.dto.SensorLogDataDto;
 import com.example.smart_farm.domain.device.entity.SensorLog;
 import com.example.smart_farm.domain.device.repository.SensorLogRepository;
 import com.example.smart_farm.domain.device.service.DeviceControlService;
 import com.example.smart_farm.domain.device.service.SensorLogService;
+import com.example.smart_farm.domain.device.service.SmartFarmMqttService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +29,7 @@ public class DeviceController {
     private final SensorLogRepository sensorLogRepository;
     private final SensorLogService sensorLogService;
     private final DeviceControlService deviceControlService;
+    private final SmartFarmMqttService smartFarmMqttService;
 
     @GetMapping("/{deviceId}/sensors")
     public ResponseEntity<SensorDataResponseDto> getLatestSensorData(@PathVariable String deviceId) {
@@ -125,6 +128,28 @@ public class DeviceController {
                 "action", action,
                 "command", command,
                 "mqttPublished", mqttPublished
+        ));
+    }
+
+    @PostMapping("/{deviceId}/sensors/sync")
+    public ResponseEntity<Map<String, Object>> syncSensorData(
+            @PathVariable String deviceId,
+            @RequestBody List<SensorLogDataDto> payloads) {
+
+        int saved = 0;
+        for (SensorLogDataDto payload : payloads) {
+            payload.setDeviceId(deviceId);
+            if (smartFarmMqttService.saveSensorData(payload)) {
+                saved++;
+            }
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "deviceId", deviceId,
+                "received", payloads.size(),
+                "saved", saved,
+                "skipped", payloads.size() - saved
         ));
     }
 
