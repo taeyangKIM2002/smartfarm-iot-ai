@@ -35,7 +35,8 @@ import { SensorData } from '../../service/sensorService';
 import { sensorService } from '../../service/sensorService';
 
 const SENSOR_DEVICE_ID = 'RASP_001';
-const HARDWARE_CAMERA_URL = 'http://localhost:8080/api/v1/camera/hls/stream.m3u8';
+const APP_HOST = window.location.hostname || 'localhost';
+const HARDWARE_CAMERA_URL = `http://${APP_HOST}:8080/api/v1/camera/hls/stream.m3u8`;
 
 type SectionKey = 'overview' | 'sensors' | 'ai' | 'control' | 'history' | 'flow' | 'system';
 
@@ -49,7 +50,7 @@ type LastDiseaseAnalysis = {
 const menuItems: Array<{ key: SectionKey; label: string; icon: typeof Home }> = [
   { key: 'overview', label: '대시보드', icon: Home },
   { key: 'sensors', label: '센서 모니터링', icon: Activity },
-  { key: 'ai', label: 'AI 건강 상태 확인(시연용)', icon: Camera },
+  { key: 'ai', label: 'AI 건강 상태 확인(개발용)', icon: Camera },
   { key: 'control', label: '제어', icon: Droplet },
   { key: 'history', label: '히스토리', icon: History },
   { key: 'flow', label: '시스템 흐름', icon: Server },
@@ -299,7 +300,7 @@ export default function DashboardPage() {
       const now = new Date().toISOString();
       localStorage.setItem('lastWateredAt', now);
       setLastWateredAt(now);
-      setSoilMoisture((prev) => Math.min(100, prev + 15));
+      setSoilMoisture((prev) => Math.min(100, prev));
       toast.success('물주기 명령 발행 완료', {
         description: `MQTT 토픽 smartfarm/${SENSOR_DEVICE_ID}/control 로 PUMP_ON을 전송했습니다.`,
         duration: 2500,
@@ -414,6 +415,7 @@ export default function DashboardPage() {
     () => getLightContext(lightIntensity, sensorTime, humidity, hasLightReading),
     [hasLightReading, humidity, lightIntensity, sensorTime],
   );
+  const isRaspberryPiConnected = clockTime.getTime() - sensorTime.getTime() < 2 * 60 * 1000;
 
   const plantAlerts: PlantAlert[] = useMemo(() => {
     const alerts: PlantAlert[] = [];
@@ -655,7 +657,11 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span>라즈베리파이</span>
-                <span className="rounded-full bg-amber-500 px-2 py-0.5 font-bold text-white">대기</span>
+                <span className={`rounded-full px-2 py-0.5 font-bold text-white ${
+                  isRaspberryPiConnected ? 'bg-emerald-600' : 'bg-amber-500'
+                }`}>
+                  {isRaspberryPiConnected ? 'ON' : '대기'}
+                </span>
               </div>
             </div>
           </div>

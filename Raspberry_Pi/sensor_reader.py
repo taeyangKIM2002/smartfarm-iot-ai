@@ -161,12 +161,16 @@ class SensorReader:
         return int(analog.value), float(analog.voltage)
 
     def _raw_to_lux(self, raw_value: int, voltage: float | None = None) -> int | None:
+        inverted = os.getenv("LIGHT_INVERTED", "false").lower() in {"1", "true", "yes"}
+
         if voltage is not None:
             max_voltage = float(os.getenv("LIGHT_MAX_VOLTAGE", "3.3"))
             max_lux = int(os.getenv("LIGHT_MAX_LUX", "1200"))
             if voltage <= 0.02:
                 return None
             ratio = max(0.0, min(1.0, voltage / max_voltage))
+            if inverted:
+                ratio = 1.0 - ratio
             return round(ratio * max_lux)
 
         if abs(raw_value) <= 5:
@@ -180,4 +184,6 @@ class SensorReader:
 
         ratio = (raw_value - dark_raw) / (bright_raw - dark_raw)
         ratio = max(0.0, min(1.0, ratio))
+        if inverted:
+            ratio = 1.0 - ratio
         return round(ratio * max_lux)

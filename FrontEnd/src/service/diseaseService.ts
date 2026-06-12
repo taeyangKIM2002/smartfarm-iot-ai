@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { AI_API_BASE_URL } from './api';
 
 export interface DiseaseStats {
   greenRatio: number;
@@ -25,11 +26,18 @@ export interface DiseaseAnalysis {
   }>;
 }
 
+interface AnalyzeOptions {
+  strictModelOnly?: boolean;
+  binaryPlantLabels?: boolean;
+}
+
 export const diseaseService = {
-  analyze: async (stats: DiseaseStats, image?: string): Promise<DiseaseAnalysis> => {
-    const response = await axios.post<DiseaseAnalysis>('http://127.0.0.1:8000/api/v1/disease/analyze', {
+  analyze: async (stats: DiseaseStats, image?: string, options: AnalyzeOptions = {}): Promise<DiseaseAnalysis> => {
+    const response = await axios.post<DiseaseAnalysis>(`${AI_API_BASE_URL}/disease/analyze`, {
       stats,
       image,
+      strictModelOnly: options.strictModelOnly ?? false,
+      binaryPlantLabels: options.binaryPlantLabels ?? false,
     });
 
     return response.data;

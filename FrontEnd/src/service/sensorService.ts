@@ -1,5 +1,5 @@
 import axios from 'axios';
-import api from './api';
+import api, { AI_API_BASE_URL } from './api';
 
 export interface SensorData {
   temperature: number;
@@ -26,7 +26,7 @@ export const sensorService = {
         return response.data.data[0];
       }
     } catch {
-      const response = await axios.get(`http://127.0.0.1:8000/api/v1/plants/current?deviceId=${deviceId}`);
+      const response = await axios.get(`${AI_API_BASE_URL}/plants/current?deviceId=${deviceId}`);
       return {
         ...response.data,
         createdAt: response.data.measuredAt,

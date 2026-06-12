@@ -50,15 +50,25 @@ def read_queue() -> list[dict]:
         return []
 
     queued: list[dict] = []
-    with QUEUE_PATH.open("r", encoding="utf-8") as file:
-        for line in file:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                queued.append(json.loads(line))
-            except json.JSONDecodeError:
-                continue
+    try:
+        lines = QUEUE_PATH.read_text(encoding="utf-8").splitlines()
+    except UnicodeDecodeError:
+        corrupt_path = QUEUE_PATH.with_suffix(f"{QUEUE_PATH.suffix}.corrupt")
+        try:
+            QUEUE_PATH.replace(corrupt_path)
+        except OSError:
+            pass
+        print(f"Offline queue was corrupted. backed up to {corrupt_path}")
+        return []
+
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            queued.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
     return queued
 
 

@@ -42,7 +42,7 @@ def on_message(client, userdata, msg):
         return
 
     command = str(data.get("command", "")).upper()
-    duration = int(data.get("duration", 30))
+    duration = int(data.get("duration", 3))
 
     if command == "PUMP_ON":
         print(f"Water pump ON for {duration}s")

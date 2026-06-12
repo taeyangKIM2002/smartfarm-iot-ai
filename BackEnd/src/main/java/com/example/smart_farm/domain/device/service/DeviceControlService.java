@@ -13,7 +13,7 @@ public class DeviceControlService {
     private final MqttPublisher mqttPublisher;
 
     public boolean turnOnWaterPump(String deviceId) {
-        return sendControlCommand(deviceId, "PUMP_ON", 10);
+        return sendControlCommand(deviceId, "PUMP_ON", 3);
     }
 
     public boolean turnOnNutrientPump(String deviceId) {

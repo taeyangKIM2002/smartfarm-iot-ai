@@ -99,15 +99,3 @@ class BasilEmotionEngine:
             "isAbnormal": emotion in {"sick", "thirsty", "overwatered", "cold", "hot"},
             "measuredAt": measured_at.isoformat(timespec="seconds"),
         }
-
-
-if __name__ == "__main__":
-    engine = BasilEmotionEngine()
-    samples = [
-        {"temp": 24.0, "humidity": 50.0, "moisture": 60.0},
-        {"temp": 32.0, "humidity": 60.0, "moisture": 50.0},
-        {"temp": 20.0, "humidity": 80.0, "moisture": 20.0},
-    ]
-
-    for sample in samples:
-        print(engine.evaluate_emotion(sample["temp"], sample["humidity"], sample["moisture"]))

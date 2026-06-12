@@ -6,6 +6,7 @@ export SMARTFARM_MQTT_PORT="${SMARTFARM_MQTT_PORT:-1883}"
 export SMARTFARM_DEVICE_ID="${SMARTFARM_DEVICE_ID:-RASP_001}"
 export SMARTFARM_SENSOR_INTERVAL="${SMARTFARM_SENSOR_INTERVAL:-60}"
 export SMARTFARM_BACKEND_URL="${SMARTFARM_BACKEND_URL:-http://${SMARTFARM_MQTT_HOST}:8080}"
+export LIGHT_INVERTED="${LIGHT_INVERTED:-true}"
 export PYTHONUNBUFFERED=1
 
 MODE_ARGS=()
@@ -19,6 +20,7 @@ echo "Device: ${SMARTFARM_DEVICE_ID}"
 echo "Interval: ${SMARTFARM_SENSOR_INTERVAL}s"
 echo "Mode: ${SMARTFARM_SENSOR_MODE:-hardware}"
 echo "Backend: ${SMARTFARM_BACKEND_URL}"
+echo "Light inverted: ${LIGHT_INVERTED}"
 
 python3 "$(dirname "$0")/sensor_mqtt_publisher.py" \
   --broker-host "$SMARTFARM_MQTT_HOST" \

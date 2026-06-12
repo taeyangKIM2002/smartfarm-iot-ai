@@ -29,7 +29,7 @@ export function SmartCamera() {
       }
       setIsCameraOn(true);
     } catch {
-      setError('카메라 권한을 허용해야 노트북 카메라로 식물 상태 확인을 시연할 수 있습니다.');
+      setError('카메라 권한을 허용해야 노트북 카메라로 식물 상태를 확인할 수 있습니다.');
     }
   };
 
@@ -95,7 +95,10 @@ export function SmartCamera() {
     setIsAnalyzing(true);
     setError('');
     try {
-      const result = await diseaseService.analyze(frame.stats, frame.image);
+      const result = await diseaseService.analyze(frame.stats, frame.image, {
+        strictModelOnly: true,
+        binaryPlantLabels: true,
+      });
       setAnalysis(result);
       localStorage.setItem('lastDiseaseAnalysis', JSON.stringify({
         label: result.label,
@@ -118,7 +121,7 @@ export function SmartCamera() {
       : 'border-green-200 bg-green-50 text-green-700';
 
   const resultBadge = analysis?.status === 'watch'
-    ? '추가 확인 권장'
+    ? '재촬영 권장'
     : `신뢰도 ${Math.round((analysis?.confidence ?? 0) * 100)}%`;
 
   return (
@@ -126,7 +129,7 @@ export function SmartCamera() {
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Camera size={24} className="text-green-600" />
-          <h2 className="text-xl font-bold text-gray-800">AI 건강 상태 확인(시연용)</h2>
+          <h2 className="text-xl font-bold text-gray-800">AI 건강 상태 확인(개발용)</h2>
         </div>
         {analysis?.isSick ? (
           <ShieldAlert size={24} className="text-red-600" />
@@ -183,11 +186,11 @@ export function SmartCamera() {
       <div className="mt-4 rounded-lg border border-emerald-100 bg-emerald-50/70 p-3 text-xs text-gray-700">
         <p className="mb-2 font-bold text-emerald-800">AI 모델 정보</p>
         <div className="grid gap-1">
-          <span>판별 방식: Model-Training 연동 진단</span>
-          <span>사용 모델: Model-Training YOLOv4 TFLite</span>
+          <span>판별 방식: Model-Training TFLite 출력 기반</span>
+          <span>사용 모델: YOLOv4 TFLite</span>
           <span>입력 데이터: 카메라 프레임 이미지</span>
-          <span>분류 대상: 정상 / 병해충 의심</span>
-          <span>출력 결과: 라벨 + 판정 단계</span>
+          <span>클래스 매핑: 0=정상, 1=병해충 의심</span>
+          <span>보류 기준: 최소 신뢰도와 클래스 간 확률 차이</span>
         </div>
       </div>
 
